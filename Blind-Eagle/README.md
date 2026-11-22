@@ -59,8 +59,8 @@ flowchart TD
 2. **Delivery & Evasion — Geofencing and legitimate hosting (T1102 / T1608).** Links pass through URL shorteners that perform geolocation detection; a connection from outside the target country is redirected to the real impersonated site, so the malicious path is never exposed to analysts or sandboxes. Payloads are staged on Google Drive, Dropbox, Bitbucket, GitHub, Pastebin and the Discord CDN behind dynamic-DNS names.
 3. **User Execution — Archive and .url lures (T1204.001 / T1204.002).** The dropper is usually a compressed archive, sometimes in obscure formats such as LHA or UUE to evade users and tooling. In the November 2024–2025 campaigns the group also weaponized malicious `.url` files that mimic the behavior of CVE-2024-43451, triggering a WebDAV/HTTP callback that both signals the victim's interaction and fetches the next stage ([Check Point Research](https://research.checkpoint.com/2025/blind-eagle-and-justice-for-all/)).
 4. **Execution — Scripted downloaders (T1059.001 / T1059.005 / T1047).** Extracted contents are typically VBScript or PowerShell stagers using WScript/XMLHTTP to pull a second stage from a hardcoded server. Second-stage artifacts are frequently text, images (with payloads hidden via steganography, T1027.003) or .NET executables.
-5. **Defense Evasion — Packing and process injection (T1027 / T1055.012 / T1140).** The group protects payloads with the HeartCrypt packer-as-a-service and NET-Reactor obfuscation, then uses process hollowing to run the final RAT inside a legitimate process — Check Point observed injection into `MSBuild.exe`, `InstallUtil.exe` and `csc.exe`.
-6. **Execution via Sideloading — HijackLoader (T1574.002 / T1218).** A June 2024 variant delivered legitimately signed ASUS or IObit executables that sideload a malicious DLL, executing HijackLoader, which in turn injected AsyncRAT ([Kaspersky GReAT](https://securelist.com/blindeagle-apt/113414/)).
+5. **Stealth — Packing and process injection (T1027 / T1055.012 / T1140).** The group protects payloads with the HeartCrypt packer-as-a-service and NET-Reactor obfuscation, then uses process hollowing to run the final RAT inside a legitimate process — Check Point observed injection into `MSBuild.exe`, `InstallUtil.exe` and `csc.exe`.
+6. **Execution via Sideloading — HijackLoader (T1574.001 / T1218).** A June 2024 variant delivered legitimately signed ASUS or IObit executables that sideload a malicious DLL, executing HijackLoader, which in turn injected AsyncRAT ([Kaspersky GReAT](https://securelist.com/blindeagle-apt/113414/)).
 7. **Persistence (T1053.005 / T1547.001).** The intermediate .NET RAT can maintain persistence through scheduled tasks and can run PowerShell on command.
 8. **Collection & Credential Access (T1056.001 / T1555.003 / T1113).** Final RATs provide keylogging, screenshot capture and browser monitoring. In banking campaigns a modified Quasar RAT watched for window titles matching about ten Colombian financial institutions and began keylogging only when a match appeared.
 9. **Command & Control and Exfiltration (T1071.001 / T1105 / T1041 / T1567.002).** RAT C2 runs over dynamic-DNS domains; data is exfiltrated over the C2 channel or to cloud storage.
@@ -112,7 +112,7 @@ This section outlines how to reproduce Blind Eagle's behavior inside a contained
 2. **Geofenced delivery (T1102).** Stand up a simple redirector that serves the next stage only to a lab-internal source IP and sends everything else to a decoy page. This validates whether egress proxies and URL detonation see the real path.
 3. **`.url` callback (T1204).** Drop a benign `.url` file that points at an internal WebDAV/HTTP listener. Confirm the host generates the `Microsoft-WebDAV-MiniRedir` request and that your sensors capture the outbound connection and the user-interaction trigger.
 4. **Scripted stager (T1059.001 / T1059.005).** Use a VBScript or PowerShell downloader that retrieves an inert marker file from the lab server via XMLHTTP/`Invoke-WebRequest`. This exercises script-block logging and script-interpreter detections.
-5. **Loader behavior + hosting abuse (T1218 / T1574.002 / T1105).** Emulate sideloading by placing a benign test DLL beside a signed host binary in a user-writable directory, and host your inert payload on a developer platform (a private GitHub/Bitbucket repo or a Discord webhook) to test platform-allowlisting and download detections.
+5. **Loader behavior + hosting abuse (T1218 / T1574.001 / T1105).** Emulate sideloading by placing a benign test DLL beside a signed host binary in a user-writable directory, and host your inert payload on a developer platform (a private GitHub/Bitbucket repo or a Discord webhook) to test platform-allowlisting and download detections.
 6. **Process injection (T1055.012).** Use a safe, well-known injector (for example an Atomic Red Team process-hollowing test) targeting `MSBuild.exe` or `InstallUtil.exe`, so you can tune detections for a legitimate .NET utility hosting foreign code.
 7. **C2 stand-in (T1071.001 / T1571).** Substitute an open-source C2 framework or an AsyncRAT lab build for the live malware, beaconing to an internal dynamic-DNS-style name. This lets you profile the beacon cadence and credential-collection behavior without touching real infrastructure.
 
@@ -128,7 +128,7 @@ Because Blind Eagle relies on commodity tooling and legitimate services, the str
 | Script stagers (T1059) | `winword.exe`/`outlook.exe`/explorer spawning `wscript`, `cscript`, `mshta` or `powershell` | Sysmon 1 (process create) |
 | Obscure archives (T1027) | Handling of `.lha` / `.uue` attachments; extraction to `%AppData%` then execution | EDR file + process events |
 | Process hollowing (T1055.012) | `MSBuild.exe` / `InstallUtil.exe` / `csc.exe` created suspended, then `WriteProcessMemory` / remote-thread | Sysmon 1, 8 (CreateRemoteThread), 10 (ProcessAccess) |
-| DLL sideloading (T1574.002) | Signed binary loading an unsigned DLL from a user-writable path | Sysmon 7 (image load) |
+| DLL sideloading (T1574.001) | Signed binary loading an unsigned DLL from a user-writable path | Sysmon 7 (image load) |
 | Legit-platform C2 (T1102 / T1071) | Beacons to DDNS (`duckdns`, `ip-ddns`, `ydns`) and payload pulls from `raw.githubusercontent`, `bitbucket`, Discord CDN, Pastebin | Sysmon 22, proxy/DNS logs |
 | Credential access (T1056.001) | Keylogging hooks; browser-window-title monitoring tied to bank names | EDR behavioral telemetry |
 
@@ -162,7 +162,7 @@ In a Wazuh deployment, ingest Sysmon via the Windows agent and promote matches o
 
 ## ATT&CK Technique Matrix
 
-Consolidated mapping of the techniques referenced above, grouped by tactic.
+Consolidated mapping of the techniques referenced above, grouped by tactic. Uses ATT&CK v20 IDs and tactics: since v19, Defense Evasion is split into Stealth and Defense Impairment, and DLL Side-Loading (formerly T1574.002) is part of Hijack Execution Flow: DLL (T1574.001).
 
 | Tactic | Technique (ID) | How Blind Eagle uses it |
 | --- | --- | --- |
@@ -173,12 +173,12 @@ Consolidated mapping of the techniques referenced above, grouped by tactic.
 | Execution | WMI (T1047) | Host and environment reconnaissance |
 | Persistence | Scheduled Task (T1053.005) | .NET RAT persistence option |
 | Persistence | Registry Run / Startup (T1547.001) | Autostart on some variants |
-| Defense Evasion | Process Hollowing (T1055.012) | RAT injected into MSBuild/InstallUtil/csc |
-| Defense Evasion | DLL Side-Loading (T1574.002) | Signed ASUS/IObit binaries load malicious DLL |
-| Defense Evasion | Signed Binary Proxy (T1218) | Legitimate utilities host/execute the payload |
-| Defense Evasion | Steganography (T1027.003) | Payloads hidden in images |
-| Defense Evasion | Packing / Obfuscation (T1027) | HeartCrypt PaaS + NET-Reactor |
-| Defense Evasion | Deobfuscate/Decode (T1140) | Base64/ASCII-encoded intermediate stages |
+| Stealth | Process Hollowing (T1055.012) | RAT injected into MSBuild/InstallUtil/csc |
+| Stealth | Hijack Execution Flow: DLL side-loading (T1574.001) | Signed ASUS/IObit binaries load malicious DLL |
+| Stealth | Signed Binary Proxy (T1218) | Legitimate utilities host/execute the payload |
+| Stealth | Steganography (T1027.003) | Payloads hidden in images |
+| Stealth | Packing / Obfuscation (T1027) | HeartCrypt PaaS + NET-Reactor |
+| Stealth | Deobfuscate/Decode (T1140) | Base64/ASCII-encoded intermediate stages |
 | Credential Access | Keylogging (T1056.001) | Captures banking and app credentials |
 | Credential Access | Credentials from Browsers (T1555.003) | Modified Quasar harvests browser credentials |
 | Collection | Screen Capture (T1113) | RAT screenshot capability |

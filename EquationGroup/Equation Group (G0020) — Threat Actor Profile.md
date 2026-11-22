@@ -45,7 +45,7 @@ Equation Group is defined less by a single intrusion chain than by a set of capa
 
 1. **Initial Access — multiple vectors (T1190 / T1189 / T1195).** The group used exploitation of public-facing services, web-based exploitation of selected visitors, and — most distinctively — physical supply-chain interdiction, intercepting shipped media and replacing it with trojanized versions.
 2. **Execution & Exploitation (T1203 / T1068).** Operations drew on a deep reserve of exploits, including zero-days later seen in Stuxnet. Exploitation was highly targeted, with victim validation before the full toolkit was deployed.
-3. **Defense Evasion & Validation (T1480 / T1497 / T1027).** Payloads used environmental keying and target validation so that malware would only fully execute on intended systems, alongside heavy encryption and obfuscation to resist analysis.
+3. **Stealth & Validation (T1480 / T1497 / T1027).** Payloads used environmental keying and target validation so that malware would only fully execute on intended systems, alongside heavy encryption and obfuscation to resist analysis.
 4. **Persistence — firmware-level (T1542.002).** The group's signature capability was reprogramming the firmware of hard drives from numerous major manufacturers, planting code that survives disk reformatting and OS reinstallation and is effectively invisible to the operating system. Kaspersky assessed this would require access to manufacturer source code.
 5. **Concealment — hidden storage (T1564).** Implants created hidden, encrypted virtual filesystems and hidden disk sectors to stage tools and exfiltrated data outside the view of normal forensic tooling.
 6. **Lateral Movement via removable media (T1091 / T1092).** The FANNY worm propagated over networks and USB drives, including into air-gapped environments, using a hidden storage area on the USB device to ferry commands and results across the gap.
@@ -129,7 +129,7 @@ note: >
 
 ## ATT&CK Technique Matrix
 
-Representative mapping of the techniques associated with Equation Group, grouped by tactic. Compiled from Kaspersky reporting and public ATT&CK material; representative rather than exhaustive.
+Representative mapping of the techniques associated with Equation Group, grouped by tactic. Compiled from Kaspersky reporting and public ATT&CK material; representative rather than exhaustive. Uses ATT&CK v20 tactics: since v19, Defense Evasion is split into Stealth and Defense Impairment.
 
 | Tactic | Technique (ID) | How Equation Group uses it |
 | --- | --- | --- |
@@ -139,10 +139,10 @@ Representative mapping of the techniques associated with Equation Group, grouped
 | Execution | Exploitation for Client Execution (T1203) | Deep reserve of exploits, incl. shared-with-Stuxnet zero-days |
 | Persistence | Pre-OS Boot: Component Firmware (T1542.002) | Hard-drive firmware reprogramming (IRATEMONK) |
 | Persistence | Boot or Logon Autostart (T1547) | Registry- and boot-level loading (GrayFish) |
-| Defense Evasion | Execution Guardrails (T1480) | Environmental keying / target validation |
-| Defense Evasion | Obfuscated Files or Information (T1027) | Heavy encryption across all stages |
-| Defense Evasion | Hide Artifacts (T1564) | Hidden encrypted virtual filesystems |
-| Defense Evasion | Rootkit (T1014) | Below-OS and kernel-level concealment |
+| Stealth | Execution Guardrails (T1480) | Environmental keying / target validation |
+| Stealth | Obfuscated Files or Information (T1027) | Heavy encryption across all stages |
+| Stealth | Hide Artifacts (T1564) | Hidden encrypted virtual filesystems |
+| Stealth | Rootkit (T1014) | Below-OS and kernel-level concealment |
 | Lateral Movement | Replication via Removable Media (T1091) | FANNY worm over USB |
 | C2 | Communication Through Removable Media (T1092) | Air-gap bridging via USB hidden storage |
 | Lateral Movement | Exploitation of Remote Services (T1210) | SMB exploitation (EternalBlue lineage) |

@@ -146,7 +146,7 @@ Layer in config-integrity monitoring on the Exchange `machineKey` and alerting o
 
 ## ATT&CK Technique Matrix
 
-Consolidated mapping of the techniques referenced above, grouped by tactic. Mappings are compiled from QiAnXin and Kaspersky reporting and are representative rather than exhaustive.
+Consolidated mapping of the techniques referenced above, grouped by tactic. Mappings are compiled from QiAnXin and Kaspersky reporting and are representative rather than exhaustive. Uses ATT&CK v20 tactics: since v19, Defense Evasion is split into Stealth and Defense Impairment.
 
 | Tactic | Technique (ID) | How NightEagle uses it |
 | --- | --- | --- |
@@ -157,8 +157,8 @@ Consolidated mapping of the techniques referenced above, grouped by tactic. Mapp
 | Persistence | Server Software Component: Web Shell (T1505.003) | ViewState deserialization on IIS/Exchange |
 | Persistence | IIS Components (T1505.004) | .NET loader implanted into the IIS service |
 | Persistence | Scheduled Task (T1053.005) | Relaunches the Chisel tunnel every 4 hours |
-| Defense Evasion | Reflective Code Loading (T1620) | In-memory .NET / GhostContainer execution |
-| Defense Evasion | Impair Defenses / Indicator Removal | GhostContainer evades Windows security and logging |
+| Stealth | Reflective Code Loading (T1620) | In-memory .NET / GhostContainer execution |
+| Defense Impairment | Weakening security tooling and logging (no sub-technique published) | GhostContainer evades Windows security and logging |
 | Credential Access | Unsecured Credentials (T1552) | Theft and reuse of the Exchange machineKey |
 | Credential Access | OS Credential Dumping (T1003) | Credential theft during AD escalation |
 | Privilege Escalation | Exploitation for Priv-Esc (T1068) | Abuse of Active Directory weaknesses |
