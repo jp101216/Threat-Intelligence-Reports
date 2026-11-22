@@ -49,7 +49,7 @@ Scattered Spider's chain is identity-first: it runs from a phone call to the ide
 
 ```mermaid
 flowchart TD
-    A["Recon: staff PII, lookalike domains<br/>T1589 · T1583.001"] --> B["Vishing call: help desk or employee<br/>T1566.004 · T1656"]
+    A["Recon: staff PII, lookalike domains<br/>T1589 · T1583.001"] --> B["Vishing call: help desk or employee<br/>T1566.004 · T1684.001"]
     B --> C["Reset password, enroll attacker MFA<br/>T1098.005 · T1556.006"]
     C --> D["SSO session: SaaS data and IT docs<br/>T1213.002 · T1530"]
     D -.->|SaaS-only path| X["Bulk SaaS export, extortion only<br/>Often no ransomware (2025–26 crews)"]
@@ -67,11 +67,11 @@ flowchart TD
 *A help desk call is the only "exploit" in the chain. The main path ends in ESXi ransomware; the dashed branch is SaaS-only extortion.*
 
 1. **Reconnaissance — People, not ports (T1589 / T1598.004 / T1583.001).** Operators build dossiers on employees from LinkedIn, breach data and earlier intrusions, gathering PII and security-question answers for high-value users ([CISA](https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-320a)). They register lookalike domains such as `targetsname-helpdesk[.]com` and `oktalogin-targetcompany[.]com` ([ASD's ACSC](https://www.cyber.gov.au/advisory/scattered-spider)).
-2. **Initial Access — Vishing the help desk or the employee (T1566.004 / T1656 / T1199).** The classic move is calling the help desk as an employee and asking for a password and MFA reset. The 2026 variant reverses it: callers pose as IT, steer the employee to a real-time phishing kit that mimics the corporate SSO page, and relay credentials and MFA codes live ([BleepingComputer](https://www.bleepingcomputer.com/news/security/mandiant-details-how-shinyhunters-abuse-sso-to-steal-cloud-data/)). Earlier campaigns used mass SMS phishing (0ktapus), MFA fatigue (T1621) and SIM swaps (T1111).
+2. **Initial Access — Vishing the help desk or the employee (T1566.004 / T1684.001 / T1199).** The classic move is calling the help desk as an employee and asking for a password and MFA reset. The 2026 variant reverses it: callers pose as IT, steer the employee to a real-time phishing kit that mimics the corporate SSO page, and relay credentials and MFA codes live ([BleepingComputer](https://www.bleepingcomputer.com/news/security/mandiant-details-how-shinyhunters-abuse-sso-to-steal-cloud-data/)). Earlier campaigns used mass SMS phishing (0ktapus), MFA fatigue (T1621) and SIM swaps (T1111).
 3. **Persistence — Own the MFA (T1098.005 / T1556.006 / T1484.002).** Attackers enroll their own MFA device, then delete the notification email so the user never sees it. At MGM they reached Okta Super Administrator and added a rogue identity provider through inbound federation, which let them sign in as other users ([Push Security](https://pushsecurity.com/blog/scattered-lapsus-hunters)). They also create new identities backed by fake social media profiles (T1136 / T1585.001).
 4. **Discovery & Collection in SaaS (T1213.002 / T1530 / T1114).** With a live SSO session, they search SharePoint, wikis, Teams and Slack for IT runbooks, VPN guides and admin group names, and bulk-download data from Salesforce, SharePoint and Snowflake, where the July 2025 advisory describes thousands of queries run in quick succession ([ASD's ACSC](https://www.cyber.gov.au/advisory/scattered-spider)). For successor crews this is often the objective; Snarky Spider has started exfiltration in under an hour in observed cases ([Proof](https://www.proof.com/blog/turning-account-recovery-into-a-seven-figure-business)).
 5. **Privilege Escalation — The second call (T1078.002 / T1098.007 / T1003.006).** Mandiant describes a second help desk call impersonating a named administrator, followed by WinRM and `net.exe` commands that add the attacker to "ESX Admins" ([Mandiant](https://cloud.google.com/blog/topics/threat-intelligence/defending-vsphere-from-unc3944/)). Microsoft adds LSASS dumping with Mimikatz, suspected DCSync and reading the AD FS DKM key ([Microsoft](https://microsoft.com/en-us/security/blog/2025/07/16/protecting-customers-from-octo-tempest-attacks-across-multiple-industries)). Password vaults and PAM tools are probed for weak controls (T1555.005).
-6. **Command & Control — Legitimate remote access and tunnels (T1219 / T1572 / T1090).** AnyDesk, ScreenConnect, TeamViewer and other RMM tools provide hands-on access; ngrok, Chisel, Tailscale and Teleport punch through egress controls; residential proxies and rotating hostnames hide the operators. Defense evasion ranges from EDR tampering to a 2023 BYOVD attempt with the Intel `iqvw64.sys` driver (T1068 / T1562.001) ([CrowdStrike](https://www.crowdstrike.com/en-us/blog/scattered-spider-attempts-to-avoid-detection-with-bring-your-own-vulnerable-driver-tactic/)).
+6. **Command & Control — Legitimate remote access and tunnels (T1219 / T1572 / T1090).** AnyDesk, ScreenConnect, TeamViewer and other RMM tools provide hands-on access; ngrok, Chisel, Tailscale and Teleport punch through egress controls; residential proxies and rotating hostnames hide the operators. Defense impairment ranges from EDR tampering to a 2023 BYOVD attempt with the Intel `iqvw64.sys` driver (T1068 / T1685) ([CrowdStrike](https://www.crowdstrike.com/en-us/blog/scattered-spider-attempts-to-avoid-detection-with-bring-your-own-vulnerable-driver-tactic/)).
 7. **Hypervisor Takeover — vCenter to NTDS.dit (T1021.004 / T1003.003 / T1564.006).** With vSphere admin rights, operators reboot the vCenter appliance into a root shell, install Teleport as a persistent reverse tunnel, enable SSH on ESXi hosts, power off a domain controller and copy NTDS.dit from its disk through an orphaned VM ([Mandiant](https://cloud.google.com/blog/topics/threat-intelligence/defending-vsphere-from-unc3944/)). Unit 42 saw the group create rogue VMs as an unmonitored beachhead ([Unit 42](https://unit42.paloaltonetworks.com/muddled-libra-ops-playbook/)).
 8. **Impact — Backups first, then encryption (T1490 / T1486 / T1567.002).** They delete backup jobs and repositories, push an encryptor to ESXi over SCP, power off VMs with `vim-cmd` and run it under `nohup`. ALPHV encrypted more than 100 MGM hypervisors in 2023, and DragonForce hit Marks & Spencer's ESXi hosts on 24 April 2025 ([BleepingComputer](https://www.bleepingcomputer.com/news/security/marks-and-spencer-breach-linked-to-scattered-spider-ransomware-attack/amp/)). Data goes to MEGA, Amazon S3 or VPS hosts beforehand, and extortion follows over Tox, email or Telegram, sometimes backed by DDoS or swatting of non-payers ([CyberScoop](https://cyberscoop.com/crowdstrike-cordial-spider-snarky-spider-extortion-attacks/)).
 
@@ -128,7 +128,7 @@ The through-line matters more than any single campaign: tooling, ransomware part
 
 This section outlines how to reproduce Scattered Spider's behavior inside a contained lab to validate detection and response: an assumed-breach, purple-team exercise, not operational guidance. Run technical steps only against VMs and tenants you own, use benign stand-ins for every payload, and run the social-engineering step as a tabletop or a pre-authorized test with consenting staff. The existing GOAD/Sysmon/Wazuh range covers steps 4–6; steps 1–3 need an identity layer (a free Entra ID or Okta developer tenant), and step 7 needs a nested ESXi/vCenter evaluation or another hypervisor you control.
 
-1. **Help desk pretext (T1656 / T1566.004).** Write a caller script using only what an outsider could gather (LinkedIn title, manager's name, a breached email) and walk it through the reset procedure as a tabletop. The question is whether verification asks for anything an attacker could not harvest, and whether every reset is tied to a ticket.
+1. **Help desk pretext (T1684.001 / T1566.004).** Write a caller script using only what an outsider could gather (LinkedIn title, manager's name, a breached email) and walk it through the reset procedure as a tabletop. The question is whether verification asks for anything an attacker could not harvest, and whether every reset is tied to a ticket.
 2. **Reset and MFA re-registration (T1098.005).** In the developer tenant, reset a test user's password, then register a new authenticator from a different device and IP. Confirm the reset, the "security info registered" event and the new-location sign-in all reach Wazuh as one sequence.
 3. **SaaS and document recon (T1213.002 / T1530).** Seed SharePoint or a file share with decoy files such as "vSphere admin runbook" and "VPN setup guide," then search and bulk-download them as the test user. Validate file-access auditing (Event 5145) or the M365 unified audit log, and flag a scripted user agent.
 4. **AD escalation by group add (T1098.007 / T1021.006).** Create an "ESX Admins" group in GOAD, then from another host use WinRM to run `net group "ESX Admins" <testuser> /add /domain`. Validate Sysmon Event 1 for `wsmprovhost.exe` spawning `net.exe` and Security Events 4728/4732/4756.
@@ -144,13 +144,13 @@ Endpoint detections catch Scattered Spider late, if at all, because the early st
 
 | Technique | Signal to hunt | Primary data source |
 | --- | --- | --- |
-| Help desk reset (T1656) | Password or MFA reset on a privileged account with no matching ticket, or one requested by phone | Windows 4724, IdP admin audit, ITSM tickets |
+| Help desk reset (T1684.001) | Password or MFA reset on a privileged account with no matching ticket, or one requested by phone | Windows 4724, IdP admin audit, ITSM tickets |
 | MFA device swap (T1098.005) | New MFA method registered minutes after a reset, from a new ASN or residential proxy; deletion of the "method added" email | Entra audit and sign-in logs, Okta System Log, M365 or Workspace audit |
 | Federation change (T1484.002) | New identity provider, federated domain or inbound federation rule | Entra audit, Okta System Log |
 | SaaS bulk export (T1530 / T1213.002) | PowerShell user agent on SharePoint or OneDrive; Salesforce API spikes; thousands of Snowflake queries in minutes | M365 unified audit log, Salesforce Event Monitoring, Snowflake query history |
 | Privileged group change (T1098.007) | Additions to "ESX Admins," "vSphere Admins" or "Veeam Administrators"; `wsmprovhost.exe` spawning `net.exe` | Security 4728/4732/4756, Sysmon 1 |
 | Remote access and tunnels (T1219 / T1572) | Unapproved AnyDesk, ScreenConnect, Teleport, ngrok or Chisel execution or DNS lookups | Sysmon 1, 3, 22; proxy logs |
-| BYOVD (T1068 / T1562.001) | `iqvw64.sys` or another known-vulnerable driver loaded; new kernel service | Sysmon 6, Security 4697, System 7045 |
+| BYOVD (T1068 / T1685) | `iqvw64.sys` or another known-vulnerable driver loaded; new kernel service | Sysmon 6, Security 4697, System 7045 |
 | vCenter and ESXi abuse (T1021.004 / T1003.003) | VCSA reboot, SSH started on ESXi, a DC disk attached to another VM, bulk `vmsvc/power.off` | vCenter events, ESXi `shell.log`, `auth.log`, audit records |
 | Backup tampering (T1490) | Unusual admin logon to the backup server, then mass job or repository deletion | Security 4624, Veeam audit log |
 
@@ -203,7 +203,7 @@ In a Wazuh deployment, ingest Sysmon and the Security log through the Windows ag
 
 ## ATT&CK Technique Matrix
 
-Consolidated mapping of the techniques referenced above, grouped by tactic.
+Consolidated mapping of the techniques referenced above, grouped by tactic, using ATT&CK v20 IDs and tactics. Since v19, Defense Evasion is split into Stealth and Defense Impairment, and Impersonation (formerly T1656) and Disable or Modify Tools (formerly T1562.001) have new IDs.
 
 | Tactic | Technique (ID) | How Scattered Spider uses it |
 | --- | --- | --- |
@@ -224,11 +224,11 @@ Consolidated mapping of the techniques referenced above, grouped by tactic.
 | Persistence | Account Manipulation: Additional Groups (T1098.007) | Self-added to "ESX Admins" and backup admin groups |
 | Persistence | Modify Authentication Process: MFA (T1556.006) | MFA reset or reassigned to attacker device |
 | Persistence | Create Account (T1136) | New identities in the victim tenant |
-| Defense Evasion | Impersonation (T1656) | Posing as employees and IT staff |
-| Defense Evasion | Trust Modification (T1484.002) | Rogue federated IdP with automatic account linking |
-| Defense Evasion | Disable or Modify Tools (T1562.001) | EDR tampering, including driver patching |
-| Defense Evasion | Run Virtual Instance (T1564.006) | Rogue VMs created outside EDR coverage |
-| Defense Evasion | Clear Mailbox Data (T1070.008) | Deleting MFA-enrollment alert emails |
+| Stealth | Social Engineering: Impersonation (T1684.001) | Posing as employees and IT staff |
+| Stealth | Run Virtual Instance (T1564.006) | Rogue VMs created outside EDR coverage |
+| Stealth | Clear Mailbox Data (T1070.008) | Deleting MFA-enrollment alert emails |
+| Defense Impairment | Trust Modification (T1484.002) | Rogue federated IdP with automatic account linking |
+| Defense Impairment | Disable or Modify Tools (T1685) | EDR tampering, including driver patching |
 | Privilege Escalation | Exploitation for Privilege Escalation (T1068) | BYOVD with CVE-2015-2291 |
 | Discovery | Account and Permission Groups Discovery (T1087 / T1069) | AD enumeration with ADExplorer and ADRecon |
 | Discovery | Remote System Discovery (T1018) | Locating vCenter, ESXi and backup servers |
